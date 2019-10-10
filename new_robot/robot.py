@@ -5,10 +5,16 @@ from ev3dev.ev3 import *
 from time import sleep
 from simple_pid import *
 
+DEFAULT_SPEED = 500
+
 class Robot():
 
     def __init__(self):
 
+        self.DEFAULT_PASSES = 1600
+        self.DEFAULT_SPEED = 500
+        self.PIPE_AREA = ['blue', 'red', 'yellow']
+        self.PIPE_AREA_DICTIONARY = {'yellow': 10, 'red' : 15, 'blue' : 20}
         self.DESTINY_TO_MAIN = "robot/secTomain"
         self.DESTINY_TO_SEC = "robot/mainTosec"
         self.DESTINY_FROM_TERTIATY = "robot/tertyTomain"
@@ -23,7 +29,6 @@ class Robot():
         self.upper_front_ultrassonic = UltrasonicSensor('in2')
         self.gyro = GyroSensor('in1')
 
-
         self.upper_front_ultrassonic.mode = 'US-DIST-CM'
         self.left_ultrassonic.mode = 'US-DIST-CM'
         self.right_ultrassonic.mode = 'US-DIST-CM'
@@ -31,8 +36,8 @@ class Robot():
 
         ##Secondary Brick
 
-        self.left_color_sensor = None
-        self.right_color_sensor = None
+        self.left_color_sensor = "None"
+        self.right_color_sensor = "None"
 
         self.left_lower_ultrassonic = None
 
@@ -56,6 +61,11 @@ class Robot():
         self.tertiary_connection.on_connect = self.on_connect_tertiary
         self.tertiary_connection.on_message = self.on_message_tertiary
         self.tertiary_connection.loop_start()
+
+        ##OTHERS
+
+        self.learning_dictionary = {}
+
 
     def on_connect_secondary(self, client, userdata, flags, rc):
         print("SECONDARY BRICK CONNECTION SUCESS!!!!")
@@ -120,3 +130,288 @@ class Robot():
     def init_robot(self):
         self.change_color_mode('COL-COLOR')
         self.claw_init()
+
+    def stop_wheel(self):
+        self.left_wheel.stop()
+        self.right_wheel.stop()
+
+    def color_alignment(self, expected_color, front, back):
+
+        self.change_color_mode('COL-COLOR')
+
+        while self.left_color_sensor not in expected_color or self.right_color_sensor not in expected_color:
+
+            while self.left_color_sensor in front:
+                self.left_wheel.run_forever(speed_sp=-100)
+            self.stop_wheel()
+
+            while self.left_color_sensor in back:
+                self.left_wheel.run_forever(speed_sp=100)
+            self.stop_wheel()
+
+            while self.right_color_sensor in front:
+                self.right_wheel.run_forever(speed_sp=-100)
+            self.stop_wheel()
+
+            while self.right_color_sensor in back:
+                self.right_wheel.run_forever(speed_sp=100)
+            self.stop_wheel()
+
+    def color_black_verify(self):
+
+        self.change_color_mode('COL-REFLECT')
+
+        print("valores: ",self.right_color_sensor, self.left_color_sensor)
+
+        if(self.right_color_sensor == 0 or self.left_color_sensor == 0):
+            print("entrei no 0")
+            self.change_color_mode('COL-COLOR')
+            self.move_motors(-200,-200)
+            while(self.right_color_sensor != "white" and self.left_color_sensor != "white"):print("to aqui")
+            self.stop_wheel()
+
+            print("antes")
+            self.color_alignment(["white"], ["black","unknown"], [])
+            print("depois")
+
+            self.move_motors(-200,-200)
+            sleep(1.5)
+            self.stop_wheel()
+            self.rotate_left_90()
+            return True
+
+        elif(self.right_color_sensor == 6 or self.left_color_sensor == 6):
+            print("entrei no 6")
+            self.change_color_mode('COL-COLOR')
+            self.move_motors(-200, -200)
+            while (self.right_color_sensor != "white" and self.left_color_sensor != "white"): pass
+            self.stop_wheel()
+            self.color_alignment(["white"], ["black", "green","unknown"], [])
+
+            self.move_motors(-200, -200)
+            sleep(1.5)
+            self.stop_wheel()
+            self.rotate_right_90()
+            self.rotate_right_90()
+            return True
+        print("so sai")
+        self.change_color_mode('COL-COLOR')
+        return False
+
+    def search_left_border(self):
+
+        if(self.left_color_sensor == "green" or self.right_color_sensor == "green"):
+            self.color_alignment(["green"], [], ["white"])
+            self.move_motors(-200,-200)
+            sleep(1.5)
+
+            self.rotate_right_90()
+            self.rotate_right_90()
+            return False
+
+        elif(self.left_color_sensor == "black" or self.right_color_sensor == "black"):
+            self.stop_wheel()
+            if(self.color_black_verify()):
+                return False
+
+            self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+            return True
+
+        elif(self.left_color_sensor == "unknown" or self.right_color_sensor == "unknown"):
+
+            if(self.left_color_sensor == "unknown"):
+                while(self.left_color_sensor != self.right_color_sensor):
+                    self.move_motors(-200,200)
+                self.stop_wheel()
+
+            elif (self.right_color_sensor == "unknown"):
+                while (self.left_color_sensor != self.right_color_sensor):
+                    self.move_motors(200, -200)
+                self.stop_wheel()
+
+            self.move_motors(-200,-200)
+            sleep(1.5)
+            self.stop_wheel()
+            self.rotate_left_90()
+            return False
+
+    def move_motors(self, left_speed = DEFAULT_SPEED, right_speed = DEFAULT_SPEED):
+
+        self.left_wheel.run_forever(speed_sp = left_speed)
+        self.right_wheel.run_forever(speed_sp = right_speed)
+
+    def rotate_left_90(self):
+        self.gyro_reset()
+        self.move_motors(-300,300)
+        while (self.gyro.value() > -88) : pass
+        self.stop_wheel()
+        self.gyro_reset()
+        self.gyro_reset()
+
+    def rotate_right_90(self):
+        self.gyro_reset()
+        self.move_motors(300,-300)
+        while (self.gyro.value() < 88) : pass
+        self.stop_wheel()
+        self.gyro_reset()
+        self.gyro_reset()
+
+    def right_pid(self,distance):
+        self.gyro_reset()
+        self.change_color_mode('COL-REFLECT')
+        self.right_wheel.position = 0
+        default = 200
+        pid = PID(1.025, 0, 0.9, setpoint=39)
+
+        max_speed_bound = 500
+        max_control = max_speed_bound - default
+        min_control = -max_speed_bound + default
+        entrar = True
+        while self.right_wheel.position < distance and int(self.right_color_sensor) != 0:
+
+            control = pid(int(self.right_color_sensor))
+
+            if self.right_wheel.position > 200 and entrar:
+                entrar = False
+                self.gyro_reset()
+                default = 300
+                pid.tunings = (1.025, 0, 0.9,)
+
+            if (self.gyro.value() > 25):
+                self.stop_wheel()
+                self.change_color_mode("COL-COLOR")
+
+                while self.right_color_sensor in self.PIPE_AREA:
+                    self.move_motors(-200, -200)
+                self.stop_wheel()
+
+                while self.right_color_sensor in self.PIPE_AREA or self.right_color_sensor == 'black':
+                    self.right_wheel.run_forever(speed_sp=200)
+
+                self.stop_wheel()
+                self.change_color_mode("COL-REFLECT")
+
+            if control > max_control:
+                control = max_speed_bound - default
+            elif control < min_control:
+                control = -max_speed_bound + default
+
+            self.right_wheel.run_forever(speed_sp=default + control)
+            self.left_wheel.run_forever(speed_sp=default - control)
+
+        self.stop_wheel()
+
+    def left_pid(self, distance):
+
+        self.gyro_reset()
+        self.change_color_mode('COL-REFLECT')
+        self.left_wheel.position = 0
+
+        default = 200
+        pid = PID(1.025, 0, 0.13, setpoint=39)
+
+        max_speed_bound = 500
+        max_control = max_speed_bound - default
+        min_control = -max_speed_bound + default
+        entrar = True
+        while self.left_wheel.position < distance and int(self.left_color_sensor) != 0:
+            print("gyro Left   " + str(self.gyro.value()))
+
+            control = pid(int(self.left_color_sensor))
+            if self.left_wheel.position > 200 and entrar:
+                entrar = False
+                self.gyro_reset()
+                default = 300
+                pid.tunings = (1.025, 0, 0.13,)
+
+            if (self.gyro.value() < -25):
+
+                self.stop_wheel()
+                self.change_color_mode("COL-COLOR")
+
+                while self.left_color_sensor in self.PIPE_AREA:
+                    self.move_motors(-200,-200)
+                self.stop_wheel()
+
+                while self.left_color_sensor in self.PIPE_AREA or self.left_color_sensor == 'black':
+                    self.left_wheel.run_forever(speed_sp=200)
+
+                self.stop_wheel()
+                self.change_color_mode("COL-REFLECT")
+
+            if control > max_control:
+                control = max_speed_bound - default
+            elif control < min_control:
+                control = -max_speed_bound + default
+
+            self.right_wheel.run_forever(speed_sp=default - control)
+            self.left_wheel.run_forever(speed_sp=default + control)
+
+        self.stop_wheel()
+
+    def pid_adjustment(self, sensor):
+
+        if(sensor == 'left'):
+            self.move_motors(-200,-200)
+            while(self.left_color_sensor in self.PIPE_AREA): pass
+            self.stop_wheel()
+
+            self.move_motors(200,0)
+            while(self.left_color_sensor in self.PIPE_AREA or self.left_color_sensor == 'black'): pass
+            self.stop_wheel()
+
+        elif(sensor == "right"):
+            self.move_motors(-200, -200)
+            while (self.right_color_sensor in self.PIPE_AREA): pass
+            self.stop_wheel()
+
+            self.move_motors(0,200)
+            while (self.right_color_sensor in self.PIPE_AREA or self.right_color_sensor == 'black'): pass
+            self.stop_wheel()
+
+
+    def learning_colors(self):
+        self.move_motors(-200,-200)
+        sleep(1.5)
+        self.stop_wheel()
+
+        self.rotate_left_90()
+        self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+
+        self.move_motors()
+        while self.left_color_sensor not in self.PIPE_AREA or self.right_color_sensor not in self.PIPE_AREA: pass
+        self.stop_wheel()
+
+        self.learning_dictionary[self.PIPE_AREA_DICTIONARY[self.left_color_sensor]] = self.DEFAULT_PASSES * 3.34
+
+        self.move_motors(-200,-200)
+        while self.left_color_sensor in self.PIPE_AREA or self.right_color_sensor in self.PIPE_AREA: pass
+        self.stop_wheel()
+
+        self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+        self.move_motors(-200,-200)
+        sleep(0.5)
+
+        self.stop_wheel()
+
+        self.rotate_left_90()
+        self.right_pid(self.DEFAULT_PASSES + 200)
+
+        self.change_color_mode('COL-COLOR')
+        self.rotate_right_90()
+        self.move_motors()
+        while self.left_color_sensor not in self.PIPE_AREA or self.right_color_sensor not in self.PIPE_AREA: pass
+        self.stop_wheel()
+
+        self.learning_dictionary[self.PIPE_AREA_DICTIONARY[self.left_color_sensor]] = self.DEFAULT_PASSES*2.2
+
+        for pipe in self.PIPE_AREA_DICTIONARY.values():
+            if(pipe not in self.learning_dictionary.keys()):
+                self.learning_dictionary[pipe] = self.DEFAULT_PASSES
+                break
+
+        self.move_motors(-200, -200)
+        while self.left_color_sensor in self.PIPE_AREA or self.right_color_sensor in self.PIPE_AREA: pass
+        self.stop_wheel()
+
+        self.color_alignment(["black"], self.PIPE_AREA, ["white"])

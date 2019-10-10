@@ -28,14 +28,14 @@ def claw_init(claw_motor):
     claw_motor.stop()
 
 def claw_grab(claw_motor):
-    claw_motor.run_forever(speed_sp=300)
+    claw_motor.run_forever(speed_sp=100)
     sleep(2)
     claw_motor.stop()
     sleep(2)
     claw_init(claw_motor)
 
 def claw_delivery(claw_motor):
-    claw_motor.run_forever(speed_sp=300)
+    claw_motor.run_forever(speed_sp=100)
     sleep(2)
     claw_motor.stop()
 
@@ -88,8 +88,6 @@ boolean_claw_delivery = False
 
 while True:
     print(action)
-    print('BOOLEAN INIT ',boolean_claw_init)
-    print('BOOLEAN GRAB ',boolean_claw_grab)
     if action == 'COL-REFLECT':
         l,r = color_sensor_read('COL-REFLECT', left_sensor,right_sensor)
         #print(l+" "+r)
@@ -111,7 +109,7 @@ while True:
         claw_grab(claw_motor)
         boolean_claw_grab = False
 
-    elif (boolean_claw_delivery):
+    elif(boolean_claw_delivery):
         Sound.beep()
         claw_delivery(claw_motor)
         boolean_claw_delivery = False
