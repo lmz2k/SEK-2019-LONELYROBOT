@@ -11,6 +11,7 @@ class Robot():
 
     def __init__(self):
 
+        self.INFINITY = 999999
         self.DEFAULT_PASSES = 1600
         self.DEFAULT_SPEED = 500
         self.PIPE_AREA = ['blue', 'red', 'yellow']
@@ -167,17 +168,17 @@ class Robot():
 
         return True
 
-    def color_black_verify(self):
+    def color_black_verify(self,border):
 
         self.change_color_mode('COL-REFLECT')
 
         print("valores: ",self.right_color_sensor, self.left_color_sensor)
 
-        if(self.right_color_sensor == 0 or self.left_color_sensor == 0):
+        if(int(self.right_color_sensor) == 0 or int(self.left_color_sensor) == 0):
             print("entrei no 0")
             self.change_color_mode('COL-COLOR')
             self.move_motors(-200,-200)
-            while(self.right_color_sensor != "white" and self.left_color_sensor != "white"):print("to aqui")
+            while(self.right_color_sensor != "white" or self.left_color_sensor != "white"):print("to aqui")
             self.stop_wheel()
 
             print("antes")
@@ -187,10 +188,14 @@ class Robot():
             self.move_motors(-200,-200)
             sleep(1.5)
             self.stop_wheel()
-            self.rotate_left_90()
+
+            if(border):
+                self.rotate_right_90()
+            else:
+                self.rotate_left_90()
             return True
 
-        elif(self.right_color_sensor == 6 or self.left_color_sensor == 6):
+        elif(int(self.right_color_sensor == 6) or int(self.left_color_sensor == 6)):
             print("entrei no 6")
             self.change_color_mode('COL-COLOR')
             self.move_motors(-200, -200)
@@ -204,11 +209,10 @@ class Robot():
             self.rotate_right_90()
             self.rotate_right_90()
             return True
-        print("so sai")
         self.change_color_mode('COL-COLOR')
         return False
 
-    def search_left_border(self):
+    def search_border(self, border = True): ##se border == True ele vai ir para o borda esquerda, caso não, borda direita
 
         if(self.left_color_sensor == "green" or self.right_color_sensor == "green"):
             self.color_alignment(["green"], [], ["white"])
@@ -221,11 +225,36 @@ class Robot():
 
         elif(self.left_color_sensor == "black" or self.right_color_sensor == "black"):
             self.stop_wheel()
-            if(self.color_black_verify()):
+            if(self.color_black_verify(border)):
                 return False
 
             if(self.color_alignment(["black"], self.PIPE_AREA, ["white"])):
+                self.stop_wheel()
+                self.move_motors(-200, -200)
+                sleep(0.5)
+                self.stop_wheel()
+                if(border):
+                    self.rotate_left_90()
+                    self.right_pid(self.INFINITY)
+                    self.change_color_mode('COL-COLOR')
+                    self.move_motors(-100, -100)
+                    while self.left_color_sensor != 'white' and self.right_color_sensor != 'white': pass
+                    self.stop_wheel()
+
+                else:
+                    self.rotate_right_90()
+                    self.left_pid(self.INFINITY)
+                    self.change_color_mode('COL-COLOR')
+                    self.move_motors(-100, -100)
+                    while self.left_color_sensor != 'white' and self.right_color_sensor != 'white': pass
+                    self.stop_wheel()
                 return True
+
+            # else:
+            #
+            #     self.move_motors(-100, -100)
+            #     while self.left_color_sensor == 'white' or self.right_color_sensor == 'white': pass
+            #     self.stop_wheel()
 
         elif(self.left_color_sensor == "unknown" or self.right_color_sensor == "unknown"):
 
@@ -242,7 +271,12 @@ class Robot():
             self.move_motors(-200,-200)
             sleep(1.5)
             self.stop_wheel()
-            self.rotate_left_90()
+            if (border):
+                self.rotate_right_90()
+
+            else:
+                self.rotate_left_90()
+
             return False
 
     def move_motors(self, left_speed = DEFAULT_SPEED, right_speed = DEFAULT_SPEED):
@@ -285,7 +319,11 @@ class Robot():
                 entrar = False
                 self.gyro_reset()
                 default = 300
-                pid.tunings = (1.025, 0, 0.9,)
+                pid.tunings = (1.025, 0, 0.9)
+
+            if(self.upper_front_ultrassonic.value() / 10 > 30):
+                default = 200
+                pid.tunings = (1.025, 0, 0.9)
 
             if (self.gyro.value() > 25):
                 self.stop_wheel()
@@ -333,6 +371,10 @@ class Robot():
                 self.gyro_reset()
                 default = 300
                 pid.tunings = (1.025, 0, 0.13,)
+
+            if (self.upper_front_ultrassonic.value() / 10 > 30):
+                default = 200
+                pid.tunings = (1.025, 0, 0.9)
 
             if (self.gyro.value() < -25):
 
@@ -382,7 +424,7 @@ class Robot():
 
     def learning_colors(self):
         self.move_motors(-200,-200)
-        sleep(1.5)
+        sleep(2)
         self.stop_wheel()
 
         self.rotate_left_90()
@@ -399,13 +441,13 @@ class Robot():
         self.stop_wheel()
 
         self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+
         self.move_motors(-200,-200)
         sleep(0.5)
-
         self.stop_wheel()
 
         self.rotate_left_90()
-        self.right_pid(self.DEFAULT_PASSES + 200)
+        self.right_pid(self.DEFAULT_PASSES + 500)
 
         self.change_color_mode('COL-COLOR')
         self.rotate_right_90()
@@ -425,3 +467,21 @@ class Robot():
         self.stop_wheel()
 
         self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+
+        self.move_motors(-200, -200)
+        sleep(0.5)
+        self.stop_wheel()
+        self.rotate_left_90()
+        self.right_pid(self.INFINITY)
+        self.move_motors(-200, -200)
+        sleep(2)
+        self.stop_wheel()
+        self.rotate_right_90()
+        self.move_motors(100, 100)
+        while self.left_color_sensor == 'white' and self.right_color_sensor == 'white': pass
+        self.stop_wheel()
+        self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+        self.move_motors(-200, -200)
+        sleep(0.5)
+        self.stop_wheel()
+        self.rotate_right_90()
