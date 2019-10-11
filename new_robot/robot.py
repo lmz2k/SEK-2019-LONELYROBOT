@@ -139,23 +139,33 @@ class Robot():
 
         self.change_color_mode('COL-COLOR')
 
+        cont = 0
+
         while self.left_color_sensor not in expected_color or self.right_color_sensor not in expected_color:
 
-            while self.left_color_sensor in front:
-                self.left_wheel.run_forever(speed_sp=-100)
-            self.stop_wheel()
+            if(cont == 5):
+                print("conte 5??")
+                return False
 
-            while self.left_color_sensor in back:
-                self.left_wheel.run_forever(speed_sp=100)
-            self.stop_wheel()
+            for cont in range(6):
 
-            while self.right_color_sensor in front:
-                self.right_wheel.run_forever(speed_sp=-100)
-            self.stop_wheel()
+                while self.left_color_sensor in front:
+                    self.left_wheel.run_forever(speed_sp=-100)
+                self.stop_wheel()
 
-            while self.right_color_sensor in back:
-                self.right_wheel.run_forever(speed_sp=100)
-            self.stop_wheel()
+                while self.left_color_sensor in back:
+                    self.left_wheel.run_forever(speed_sp=100)
+                self.stop_wheel()
+
+                while self.right_color_sensor in front:
+                    self.right_wheel.run_forever(speed_sp=-100)
+                self.stop_wheel()
+
+                while self.right_color_sensor in back:
+                    self.right_wheel.run_forever(speed_sp=100)
+                self.stop_wheel()
+
+        return True
 
     def color_black_verify(self):
 
@@ -214,8 +224,8 @@ class Robot():
             if(self.color_black_verify()):
                 return False
 
-            self.color_alignment(["black"], self.PIPE_AREA, ["white"])
-            return True
+            if(self.color_alignment(["black"], self.PIPE_AREA, ["white"])):
+                return True
 
         elif(self.left_color_sensor == "unknown" or self.right_color_sensor == "unknown"):
 
