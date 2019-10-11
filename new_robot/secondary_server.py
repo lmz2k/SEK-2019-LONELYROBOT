@@ -23,16 +23,16 @@ def color_sensor_read(mode,left_sensor,right_sensor):
     return left_sensor.value(),right_sensor.value()
 
 def claw_init(claw_motor):
-    claw_motor.run_forever(speed_sp = -300)
-    sleep(2)
+    claw_motor.run_forever(speed_sp = -1000)
+    sleep(1)
     claw_motor.stop()
 
 def claw_grab(claw_motor):
+    claw_motor.stop_action = 'hold'
     claw_motor.run_forever(speed_sp=100)
-    sleep(2)
+    sleep(1.5)
     claw_motor.stop()
-    sleep(2)
-    claw_init(claw_motor)
+
 
 def claw_delivery(claw_motor):
     claw_motor.run_forever(speed_sp=100)
@@ -78,7 +78,7 @@ right_sensor = ColorSensor('in3')
 left_lower_ultrassonic = UltrasonicSensor('in2')
 left_lower_ultrassonic.mode = ('US-DIST-CM')
 
-claw_motor = LargeMotor('outA')
+claw_motor = LargeMotor('outB')
 claw_motor.stop_action = 'hold'
 
 boolean_claw_init = False
