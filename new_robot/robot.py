@@ -71,8 +71,8 @@ class Robot():
 
         ##OTHERS
 
-        #self.learning_dictionary = {}
-        self.learning_dictionary = {10: 1600 * 2.2, 15: 1600, 20: 1600 * 3.34}
+        self.learning_dictionary = {}
+        # self.learning_dictionary = {10: 1600 * 2.2, 15: 1600, 20: 1600 * 3.34}
         self.init_wheel_position = 0
 
     def on_connect_secondary(self, client, userdata, flags, rc):
@@ -579,11 +579,12 @@ class Robot():
 
             current_reading = float(self.left_lower_ultrassonic)
 
-            if(current_reading <= small_read and ((self.learning_dictionary[self.DEFAULT_PIPE] - self.DEFAULT_PASSES) <= self.left_wheel.position)):
+            if(current_reading < small_read and ((self.learning_dictionary[self.DEFAULT_PIPE] - self.DEFAULT_PASSES) <= self.left_wheel.position)):
                 small_read = current_reading
                 default = 200
                 pid.tunings = (1.025, 0, 0.9)
                 closer_pipe_passes = self.left_wheel.position
+                print("small read ", small_read)
 
         self.stop_wheel()
 
@@ -626,28 +627,127 @@ class Robot():
         actual_position = self.left_wheel.position
 
         if(self.DEFAULT_PIPE == 10):
-            actual_position += 200
+            actual_position += 0
 
         else:
-            actual_position += 50
+            actual_position += 0
 
         self.left_wheel.run_to_rel_pos(position_sp=-(actual_position - closer_pipe_passes), speed_sp=300)
         self.right_wheel.run_to_rel_pos(position_sp=-(actual_position - closer_pipe_passes), speed_sp=300)
         self.right_wheel.wait_while('running')
         self.left_wheel.wait_while('running')
-
         self.rotate_left_90()
-        self.gyro_reset()
-        while (self.gyro.value() > -5):
-            self.left_wheel.run_forever(speed_sp=-500)
-            self.right_wheel.run_forever(speed_sp=500)
-        self.stop_wheel()
+
+        # self.gyro_reset()
+        # while (self.gyro.value() > -5):
+        #     self.left_wheel.run_forever(speed_sp=-500)
+        #     self.right_wheel.run_forever(speed_sp=500)
+        # self.stop_wheel()
 
         self.init_wheel_position = 0
         return True
 
+    def toward_the(self):
+
+        self.gyro_reset()
+        self.motors_position_reset()
+        print(self.gyro.value())
+        self.stop_wheel()
+
+        pid = PID(54, 0, 20, setpoint=0)
+        default = 200
+        max_speed_bound = 500
+
+        max_control = max_speed_bound - default
+        min_control = -max_speed_bound + default
+
+        while True:
+
+            left, right = self.middle_ultrasonic_sensors()
+            print(left, right)
+
+            if(left < 10 and right < 10):
+                pid = PID(25, 0, 15, setpoint=5)
+                default = 200
+                max_speed_bound = 300
+
+            if (left < 8 and right < 8):
+
+                # Sound.beep()
+                # ini = time.time()
+                # left, right = self.middle_ultrasonic_sensors()
+                #
+                # pid.setpoint = 0
+                # pid.tunings = (65, 0, 30)
+                # default = 50
+
+                # while ((time.time() - ini < 2) and (left > 3 or right > 3)):
+                #     left, right = self.middle_ultrasonic_sensors()
+                #
+                #     control = pid(left - right)
+                #     if control > max_control:
+                #         control = max_speed_bound - default
+                #     elif control < min_control:
+                #         control = -max_speed_bound + default
+                #
+                #     self.right_wheel.run_forever(speed_sp=default + control)
+                #     self.left_wheel.run_forever(speed_sp=default - control)
+
+                if (left <= 3 or right <= 3) and abs(left - right) <= 3:
+                    break
+
+                break
+
+            elif left == 255 and right == 255:
+                break
+
+
+            control = pid(left - right)
+
+            if control > max_control:
+                control = max_speed_bound - default
+            elif control < min_control:
+                control = -max_speed_bound + default
+
+            self.right_wheel.run_forever(speed_sp=default + control)
+            self.left_wheel.run_forever(speed_sp=default - control)
+
+        self.stop_wheel()
+        self.move_motors(50, 50)
+        sleep(0.5)
+        self.stop_wheel()
+
     def middle_ultrasonic_sensors(self):
         return self.left_ultrassonic.value() / 10, self.right_ultrassonic.value() / 10
+
+    def test_ultrassoic(self):
+
+        left, right = self.middle_ultrasonic_sensors()
+
+        if(left > right):
+
+            init_one = time.time()
+            left, right = self.middle_ultrasonic_sensors()
+
+            self.move_motors(1000,0)
+            while left > right and time.time() - init_one < 3:
+                left,right = self.middle_ultrasonic_sensors()
+                left = int(left) + 1
+            self.stop_wheel()
+            print("maior left")
+
+        elif (right > left):
+
+            init_two = time.time()
+            left, right = self.middle_ultrasonic_sensors()
+
+            self.move_motors(0, 1000)
+            while right > left and time.time() - init_two < 3:
+                left, right = self.middle_ultrasonic_sensors()
+                right = int(right) + 1
+            self.stop_wheel()
+            print("maior right")
+
 
     def verify_the_pipe_is(self):
         self.open_claws()
