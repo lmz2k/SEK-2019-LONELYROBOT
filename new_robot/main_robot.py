@@ -21,7 +21,7 @@ bossTaVindo = Robot()
 # while 1: pass
 
 try:
-    bossTaVindo.change_color_mode("COL-COLOR")
+    # bossTaVindo.change_color_mode("COL-COLOR")
     # while 1:
     #     # print("SECONDARY")
     #     # print(bossTaVindo.secondary_brick_values())
@@ -45,35 +45,56 @@ try:
     # bossTaVindo.change_color_mode("COL-COLOR")
 
     # print("sai do primeiro whilte")
-    ini = -3
-    bossTaVindo.claw_init()
-    sleep(1)
-    time_init = time.time()
+    # ini = -3
+    # bossTaVindo.claw_init()
+    # sleep(1)
+    # time_init = time.time()
+    #
+    # while not (bossTaVindo.search_border(False)):
+    #
+    #     if time.time() - time_init < 5:
+    #         bossTaVindo.move_motors(100,100)
+    #
+    #     if (bossTaVindo.upper_front_ultrassonic.value() / 10) > 35 and time.time() - time_init > 5:
+    #         print("dist", bossTaVindo.upper_front_ultrassonic.value() / 10)
+    #         print()
+    #
+    #         bossTaVindo.move_motors(200, 200)
+    #         ini = time.time()
+    #
+    #     elif time.time() - ini >= 3 and time.time() - time_init > 5:
+    #         bossTaVindo.move_motors(300, 300)
+    #
+    # bossTaVindo.learning_colors()
+    # print(bossTaVindo.learning_dictionary)
 
-    while not (bossTaVindo.search_border(False)):
+    bossTaVindo.open_claws()
 
-        if time.time() - time_init < 5:
-            bossTaVindo.move_motors(100,100)
+    bossTaVindo.claw_grab()
+    sleep(3)
+    bossTaVindo.close_claws()
 
-        if (bossTaVindo.upper_front_ultrassonic.value() / 10) > 35 and time.time() - time_init > 5:
-            print("dist", bossTaVindo.upper_front_ultrassonic.value() / 10)
-            print()
 
-            bossTaVindo.move_motors(200, 200)
-            ini = time.time()
-
-        elif time.time() - ini >= 3 and time.time() - time_init > 5:
-            bossTaVindo.move_motors(300, 300)
-
-    bossTaVindo.learning_colors()
-    print(bossTaVindo.learning_dictionary)
+    sleep(1000000000000)
 
     while not (bossTaVindo.searching_closer_pipe()) : pass
 
-    bossTaVindo.move_motors(200,200)
-    sleep(1.5)
-    bossTaVindo.stop_wheel()
-    bossTaVindo.toward_the()
+    # bossTaVindo.move_motors(200,200)
+    # sleep(1.5)
+    # bossTaVindo.stop_wheel()
+    # print(PID)
+
+
+    #
+    # bossTaVindo.toward_the_pipe()
+    #
+    # bossTaVindo.stop_wheel()
+    # bossTaVindo.get_closer_with_the_pipe()
+    # print(bossTaVindo.getting_the_pipe())
+
+    # bossTaVindo.open_claws()
+    #
+    # sleep(10)
     # pipe_alignment = bossTaVindo.getting_the_pipe()
     #
     # if(pipe_alignment == "lost"):

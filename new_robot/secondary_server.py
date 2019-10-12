@@ -29,8 +29,11 @@ def claw_init(claw_motor):
 
 def claw_grab(claw_motor):
     claw_motor.stop_action = 'hold'
-    claw_motor.run_forever(speed_sp=100)
-    sleep(1.5)
+    claw_motor.run_forever(speed_sp=1000)
+    sleep(1.6)
+    claw_motor.stop()
+    claw_motor.run_forever(speed_sp=-1000)
+    sleep(0.25)
     claw_motor.stop()
 
 

@@ -55,7 +55,7 @@ right_claw_motor = MediumMotor('outB')
 l = LargeMotor("outA")
 r = LargeMotor("outD")
 
-right_claw_motor.polarity = "inversed"
+# right_claw_motor.polarity = "inversed"
 
 left_claw_motor.position = 0
 right_claw_motor.position = 0
