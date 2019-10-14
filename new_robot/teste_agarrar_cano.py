@@ -8,15 +8,12 @@ def adjust_claw():
 
     print("entrei")
 
-    sleep(2)
-
-
     if(left_claw_motor.position > right_claw_motor.position):
         print("left > right")
-        sleep(2)
-        while left_claw_motor.position - right_claw_motor.position > -10:
-            right_claw_motor.run_forever(speed_sp = 10)
-            left_claw_motor.run_forever(speed_sp = -10)
+
+        while left_claw_motor.position - right_claw_motor.position > -5:
+            right_claw_motor.run_forever(speed_sp = 100)
+            left_claw_motor.run_forever(speed_sp = -100)
             print(left_claw_motor.position - right_claw_motor.position)
 
 
@@ -26,9 +23,9 @@ def adjust_claw():
         #     print(left_claw_motor.position, right_claw_motor.position)
 
     elif (left_claw_motor.position < right_claw_motor.position):
-        while - left_claw_motor.position + right_claw_motor.position > -10:
-            right_claw_motor.run_forever(speed_sp=-10)
-            left_claw_motor.run_forever(speed_sp=10)
+        while - left_claw_motor.position + right_claw_motor.position > -5:
+            right_claw_motor.run_forever(speed_sp=-100)
+            left_claw_motor.run_forever(speed_sp=100)
             print(left_claw_motor.position - right_claw_motor.position)
 
         left_claw_motor.stop()
@@ -48,6 +45,26 @@ def the_pipe_is():
 
     return "parallel"
 
+def verify_this_pipe_is():
+    left_claw_motor.run_forever(speed_sp=-500)
+    right_claw_motor.run_forever(speed_sp=-500)
+    sleep(1.5)
+    left_claw_motor.stop()
+    right_claw_motor.stop()
+    left_claw_motor.position = 0
+    right_claw_motor.position = 0
+
+    left_claw_motor.run_forever(speed_sp=100)
+    right_claw_motor.run_forever(speed_sp=100)
+    sleep(4)
+
+    print("after ", end="")
+    print(left_claw_motor.position, right_claw_motor.position)
+    print()
+    print("sum after ", end="")
+    print(left_claw_motor.position + right_claw_motor.position)
+
+    return the_pipe_is()
 
 
 left_claw_motor = MediumMotor('outC')
@@ -55,7 +72,7 @@ right_claw_motor = MediumMotor('outB')
 l = LargeMotor("outA")
 r = LargeMotor("outD")
 
-# right_claw_motor.polarity = "inversed"
+right_claw_motor.polarity = "inversed"
 
 left_claw_motor.position = 0
 right_claw_motor.position = 0
@@ -72,8 +89,8 @@ print(left_claw_motor.position + right_claw_motor.position)
 left_claw_motor.position = 0
 right_claw_motor.position = 0
 
-left_claw_motor.run_forever(speed_sp = 200)
-right_claw_motor.run_forever(speed_sp = 200)
+left_claw_motor.run_forever(speed_sp = 600)
+right_claw_motor.run_forever(speed_sp = 600)
 sleep(3)
 
 print("after ", end = "")
@@ -83,7 +100,9 @@ print("sum after ", end = "")
 print(left_claw_motor.position + right_claw_motor.position)
 
 print(the_pipe_is())
+print('verify ', verify_this_pipe_is())
 
+sleep( 5)
 adjust_claw()
 
 left_claw_motor.run_forever(speed_sp = -100)
@@ -92,11 +111,21 @@ sleep(3)
 left_claw_motor.stop()
 right_claw_motor.stop()
 
-l.run_forever(speed_sp = 200)
-r.run_forever(speed_sp = 200)
-sleep(1)
+# l.run_forever(speed_sp = 200)
+# r.run_forever(speed_sp = 200)
+# sleep(1)
+#
+# ini = time.time()
+# while time.time() - ini < 3:
+#     l.run_forever(speed_sp = 200)
+#     r.run_forever(speed_sp = 0)
+#     sleep(0.25)
+#     r.run_forever(speed_sp=200)
+#     l.run_forever(speed_sp=0)
+#     sleep(0.25)
 l.stop()
 r.stop()
+sleep(10)
 while 1:
     print(left_claw_motor.position, right_claw_motor.position)
 

@@ -9,13 +9,29 @@ from robot import Robot
 
 bossTaVindo = Robot()
 
+#
+# while 1:
+#     bossTaVindo.open_claws()
 
 # bossTaVindo.claw_grab()
 # bossTaVindo.claw_delivery()
+bossTaVindo.open_claws()
+bossTaVindo.claw_init()
+pipe_size = 10
 
-# bossTaVindo.claw_init()
-# bossTaVindo.open_claws()
-# pipe_size = 15
+bossTaVindo.move_motors(-1000,-1000)
+x = input()
+#bossTaVindo.rotate_right_90()
+bossTaVindo.stop_wheel()
+
+
+# bossTaVindo.claw_grab()
+# bossTaVindo.adjust_claw()
+# sleep(15)
+# bossTaVindo.move_motors(100,100)
+
+# sleep(5)
+# bossTaVindo.stop_wheel()
 
 # bossTaVindo.rotate_left_90()
 # while 1: pass
@@ -68,25 +84,27 @@ try:
     # bossTaVindo.learning_colors()
     # print(bossTaVindo.learning_dictionary)
 
-    bossTaVindo.open_claws()
-
-    bossTaVindo.claw_grab()
-    sleep(3)
-    bossTaVindo.close_claws()
-
-
-    sleep(1000000000000)
+    # bossTaVindo.open_claws()
+    #
+    # bossTaVindo.claw_grab()
+    # sleep(3)
+    # bossTaVindo.close_claws()
+    #
+    #
+    # sleep(1000000000000)
 
     while not (bossTaVindo.searching_closer_pipe()) : pass
 
-    # bossTaVindo.move_motors(200,200)
-    # sleep(1.5)
-    # bossTaVindo.stop_wheel()
+    bossTaVindo.move_motors(200,200)
+    sleep(1.5)
+    bossTaVindo.stop_wheel()
     # print(PID)
-
-
     #
-    # bossTaVindo.toward_the_pipe()
+    #
+
+    bossTaVindo.toward_the_pipe()
+    bossTaVindo.grab_the_pipe()
+    bossTaVindo.prepare_to_dive()
     #
     # bossTaVindo.stop_wheel()
     # bossTaVindo.get_closer_with_the_pipe()
