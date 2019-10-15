@@ -22,28 +22,20 @@ def color_sensor_read(mode,left_sensor,right_sensor):
 
     return left_sensor.value(),right_sensor.value()
 
-def claw_init(claw_motor):
-    claw_motor.run_forever(speed_sp = -1000)
-    sleep(1)
-    claw_motor.stop()
+def claw_init():
+    claw_motor.run_forever(speed_sp=-1000)
+    sleep(5)
 
-def claw_grab(claw_motor):
-    claw_motor.stop_action = 'brake'
-    claw_motor.run_forever(speed_sp=300)
+def claw_grab():
+    claw_motor.run_forever(speed_sp=1000)
     sleep(1.5)
     claw_motor.stop()
     sleep(1)
-    claw_motor.stop_action = 'hold'
     claw_motor.run_forever(speed_sp=-1000)
     sleep(5)
-    claw_motor.stop()
 
-
-def claw_delivery(claw_motor):
-    claw_motor.run_forever(speed_sp=100)
-    sleep(2)
-    claw_motor.stop()
-
+def claw_delivery():
+    claw_motor.run_forever(speed_sp=1000)
 
 def on_connect(client, userdata, flags, rc):
     client.subscribe("robot/mainTosec")
@@ -83,14 +75,23 @@ right_sensor = ColorSensor('in3')
 left_lower_ultrassonic = UltrasonicSensor('in2')
 left_lower_ultrassonic.mode = ('US-DIST-CM')
 
-claw_motor = LargeMotor('outB'
-                        '')
-claw_motor.stop_action = 'hold'
+claw_motor = LargeMotor('outB')
+# claw_motor.stop_action = 'hold'
 
 boolean_claw_init = False
 boolean_claw_grab = False
 boolean_claw_delivery = False
 
+# print("INICIEI")
+# claw_motor.stop()
+# claw_motor.run_timed(time_sp=5000, speed_sp=-1000, stop_action="hold")
+# claw_motor.stop()
+
+#
+#
+#
+# while 1:
+#     pass
 while True:
     print(action)
     if action == 'COL-REFLECT':
@@ -103,18 +104,18 @@ while True:
         #print(str(l)+" "+str(r))
         client.publish("robot/secTomain",str(l)+" "+str(r)+" " + str(left_lower_ultrassonic.value() / 10))
         sleep(0.05)
-    
+
     if(boolean_claw_init):
         Sound.beep()
-        claw_init(claw_motor)
+        claw_init()
         boolean_claw_init = False
 
     elif(boolean_claw_grab):
         Sound.beep()
-        claw_grab(claw_motor)
+        claw_grab()
         boolean_claw_grab = False
 
     elif(boolean_claw_delivery):
         Sound.beep()
-        claw_delivery(claw_motor)
+        claw_delivery()
         boolean_claw_delivery = False

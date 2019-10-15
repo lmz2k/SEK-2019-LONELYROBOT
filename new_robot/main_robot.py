@@ -15,9 +15,21 @@ bossTaVindo = Robot()
 
 # bossTaVindo.claw_grab()
 # bossTaVindo.claw_delivery()
+
 bossTaVindo.open_claws()
 bossTaVindo.claw_init()
 pipe_size = 10
+
+# while 1:
+#     print("levantando")
+#     bossTaVindo.claw_init()
+#     sleep(5)
+#     print("grab")
+#     bossTaVindo.claw_grab()
+#     sleep(5)
+#     print("delivery")
+#     bossTaVindo.claw_delivery()
+#     sleep(5)
 
 # bossTaVindo.move_motors(-1000,-1000)
 # x = input()
@@ -96,20 +108,18 @@ try:
 
     # bossTaVindo.test_diving()
     # sleep(1000)
-
-    while not (bossTaVindo.searching_closer_pipe()) : pass
-
-    bossTaVindo.move_motors(200,200)
-    sleep(1.5)
+    boole = False
+    while not boole:
+        while not (bossTaVindo.searching_closer_pipe()) : pass
+        bossTaVindo.move_motors(200,200)
+        sleep(1.5)
+        bossTaVindo.stop_wheel()
+        boole = bossTaVindo.toward_the_pipe()
     bossTaVindo.stop_wheel()
-    # print(PID)
-    #
-    #
-
-    bossTaVindo.toward_the_pipe()
     bossTaVindo.grab_the_pipe()
+    # bossTaVindo.grab_the_pipe()
     bossTaVindo.prepare_to_dive()
-    #
+    # #
     # bossTaVindo.stop_wheel()
     # bossTaVindo.get_closer_with_the_pipe()
     # print(bossTaVindo.getting_the_pipe())

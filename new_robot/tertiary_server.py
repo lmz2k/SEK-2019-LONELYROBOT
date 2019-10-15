@@ -21,7 +21,8 @@ left_infrared.mode = 'IR-PROX'
 right_infrared.mode = 'IR-PROX'
 left_upper_ultrassonic.mode = 'US-DIST-CM'
 
-print("SUCESS INIT")
+print("SUCESS INIT"
+      ",")
 
 while True:
     client.publish("robot/tertyTomain", str(left_infrared.value()) + " " + str(right_infrared.value()) + " " + str(left_upper_ultrassonic.value() / 10))

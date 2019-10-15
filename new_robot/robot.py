@@ -26,8 +26,8 @@ class Robot():
 
         self.right_claw.polarity = "inversed"
 
-        self.left_claw.stop_action = "hold"
-        self.right_claw.stop_action = "hold"
+        # self.left_claw.stop_action = "hold"
+        # self.right_claw.stop_action = "hold"
 
         self.left_ultrassonic = UltrasonicSensor('in4')
         self.right_ultrassonic = UltrasonicSensor('in3')
@@ -334,7 +334,7 @@ class Robot():
         self.gyro_reset()
         self.gyro_reset()
 
-    def right_pid(self,distance, claw_grab):
+    def right_pid(self,distance, claw_grab = False):
         self.gyro_reset()
         self.change_color_mode('COL-REFLECT')
         self.right_wheel.position = 0
@@ -345,7 +345,7 @@ class Robot():
         max_control = max_speed_bound - default
         min_control = -max_speed_bound + default
         entrar = True
-        while self.right_wheel.position < distance and int(self.right_color_sensor) != 0:
+        while self.right_wheel.position < distance and (int(self.left_color_sensor) != 0 and int(self.right_color_sensor) != 0):
 
             control = pid(int(self.right_color_sensor))
 
@@ -398,7 +398,7 @@ class Robot():
         max_control = max_speed_bound - default
         min_control = -max_speed_bound + default
         entrar = True
-        while self.left_wheel.position < distance and int(self.left_color_sensor) != 0:
+        while self.left_wheel.position < distance and (int(self.left_color_sensor) != 0 and int(self.right_color_sensor) != 0):
             print("gyro Left   " + str(self.gyro.value()))
 
             control = pid(int(self.left_color_sensor))
@@ -407,6 +407,8 @@ class Robot():
                 self.gyro_reset()
                 default = 300
                 pid.tunings = (1.025, 0, 0.13)
+                if (claw_grab):
+                    self.claw_grab()
 
             if (self.upper_front_ultrassonic.value() / 10 > 30):
                 default = 200
@@ -664,7 +666,25 @@ class Robot():
 
         self.stop_wheel()
 
+    def failed_to_reach_the_pipe(self):
+        self.move_motors(-200, -200)
+        sleep(2)
+        self.stop_wheel()
+        self.angle_reset()
+        self.change_color_mode('COL-COLOR')
+        self.move_motors(-200, -200)
+        while self.left_color_sensor in self.PIPE_AREA + ["black"] or self.left_color_sensor in self.PIPE_AREA + [
+            "black"]: pass
+        self.stop_wheel()
+        self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+        self.stop_wheel()
+        self.move_motors(-200,-200)
+        sleep(0.5)
+        self.stop_wheel()
+
     def toward_the_pipe(self):
+
+        self.change_color_mode('COL-REFLECT')
 
         self.gyro_reset()
         self.motors_position_reset()
@@ -678,7 +698,7 @@ class Robot():
         max_control = max_speed_bound - default
         min_control = -max_speed_bound + default
 
-        while True:
+        while int(self.left_color_sensor) != 0 and int(self.right_color_sensor) != 0:
 
             print("PID")
 
@@ -691,12 +711,12 @@ class Robot():
                 Sound.beep()
                 ini = time.time()
                 left, right = self.middle_ultrasonic_sensors()
-
                 pid.setpoint = 0
                 pid.tunings = (20, 0, 30)
                 default = 50
+                max_speed_bound = 200
 
-                while ((time.time() - ini < 2) and (left > 3 or right > 3)):
+                while ((time.time() - ini < 2) and (left > 3 and right > 3)):
                     left, right = self.middle_ultrasonic_sensors()
 
                     control = pid(left - right)
@@ -711,7 +731,6 @@ class Robot():
                 if (left <= 3 or right <= 3) and abs(left - right) <= 3:
                     break
 
-                break
             elif left == 255 and right == 255:
                 break
 
@@ -728,9 +747,45 @@ class Robot():
             self.left_wheel.run_forever(speed_sp=default - control)
 
         self.stop_wheel()
+        if((int(self.left_color_sensor) == 0 or int(self.right_color_sensor) == 0)):
+            self.failed_to_reach_the_pipe()
+            if(self.learning_dictionary[self.DEFAULT_PIPE] > 5000):
+                self.rotate_right_90()
+                self.left_pid(self.INFINITY)
+                self.change_color_mode('COL-COLOR')
+                self.move_motors(-100, -100)
+                while self.left_color_sensor != 'white' and self.right_color_sensor != 'white': pass
+                sleep(2)
+                self.stop_wheel()
+                self.rotate_left_90()
+
+            else:
+                self.rotate_left_90()
+                self.right_pid(self.INFINITY)
+                self.change_color_mode('COL-COLOR')
+                self.move_motors(-100, -100)
+                while self.left_color_sensor != 'white' and self.right_color_sensor != 'white': pass
+                sleep(2)
+                self.stop_wheel()
+                self.rotate_right_90()
+
+            self.move_motors(100, 100)
+            while self.left_color_sensor == 'white' and self.right_color_sensor == 'white': pass
+            self.stop_wheel()
+            self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+            self.move_motors(-200, -200)
+            sleep(0.5)
+            self.stop_wheel()
+            if (self.learning_dictionary[self.DEFAULT_PIPE] > 5000):
+                self.rotate_left_90()
+            else:
+                self.rotate_right_90()
+            return False
+
         self.move_motors(100,100)
         sleep(1)
         self.stop_wheel()
+        return True
 
     def middle_ultrasonic_sensors(self):
         return self.left_ultrassonic.value() / 10, self.right_ultrassonic.value() / 10
@@ -783,9 +838,9 @@ class Robot():
         return "parallel"
 
     def open_claws(self):
-        self.left_claw.run_forever(speed_sp=-200)
-        self.right_claw.run_forever(speed_sp=-200)
-        sleep(1.5)
+        self.left_claw.run_forever(speed_sp=-800)
+        self.right_claw.run_forever(speed_sp=-800)
+        sleep(1)
         self.claw_position_reset()
 
     def close_claws(self):
@@ -953,9 +1008,9 @@ class Robot():
 
         if (self.left_claw.position > self.right_claw.position):
             print("left > right")
-            while self.left_claw.position - self.right_claw.position > -10:
-                self.right_claw.run_forever(speed_sp=100)
-                self.left_claw.run_forever(speed_sp=-100)
+            while self.left_claw.position - self.right_claw.position > 0:
+                self.right_claw.run_forever(speed_sp=400)
+                self.left_claw.run_forever(speed_sp=-400)
                 print("left > right ",self.left_claw.position - self.right_claw.position)
 
             self.left_claw.stop()
@@ -964,13 +1019,17 @@ class Robot():
             #     print(left_claw_motor.position, right_claw_motor.position)
 
         elif (self.left_claw.position < self.right_claw.position):
-            while - self.left_claw.position + self.right_claw.position > -10:
-                self.right_claw.run_forever(speed_sp=-100)
-                self.left_claw.run_forever(speed_sp=100)
+            while - self.left_claw.position + self.right_claw.position > 0:
+                self.right_claw.run_forever(speed_sp=-400)
+                self.left_claw.run_forever(speed_sp=400)
                 print("right > left ", self.left_claw.position - self.right_claw.position)
 
             self.left_claw.stop()
             self.right_claw.stop()
+
+        self.move_motors(-25, -25)
+        sleep(2)
+        self.stop_wheel()
 
     def from_the_hole_case(self):
         self.angle_reset()
@@ -1051,7 +1110,9 @@ class Robot():
             self.left_pid(distance= 800,claw_grab = True)
 
     def grab_the_pipe(self):
-
+        self.move_motors(-50,-50)
+        sleep(1.25)
+        self.stop_wheel()
         self.close_claws()
 
         if(self.DEFAULT_PIPE != 10):
@@ -1063,15 +1124,14 @@ class Robot():
         # pipe_aligment = self.verify_the_pipe_is()
         #
         # x = input()
-            if(pipe_aligment == 'lost'): pass
-
+            if(pipe_aligment == 'lost'):
+                pass
             elif(pipe_aligment == 'parallel'):
                 self.from_the_hole_case()
             else:
                 self.from_the_border_case()
 
         else:
-
             self.from_the_hole_case()
             self.move_motors(-50,-50)
             sleep(1)
@@ -1145,3 +1205,21 @@ class Robot():
         # self.move_motors(1000, 1000)
         # sleep(2)
         # self.stop_wheel()
+    def test_adjust_claw(self):
+        self.open_claws()
+        sleep(1)
+        self.claw_position_reset()
+        self.close_claws()
+
+
+        self.adjust_claw()
+        self.move_motors(-25,-25)
+        sleep(2)
+        self.stop_wheel()
+
+        self.left_claw.stop()
+        self.right_claw.stop()
+        while 1:
+            print(self.left_claw.position, self.right_claw.position)
+
+
