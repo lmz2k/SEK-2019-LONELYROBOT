@@ -19,10 +19,10 @@ bossTaVindo.open_claws()
 bossTaVindo.claw_init()
 pipe_size = 10
 
-bossTaVindo.move_motors(-1000,-1000)
-x = input()
-#bossTaVindo.rotate_right_90()
-bossTaVindo.stop_wheel()
+# bossTaVindo.move_motors(-1000,-1000)
+# x = input()
+# #bossTaVindo.rotate_right_90()
+# bossTaVindo.stop_wheel()
 
 
 # bossTaVindo.claw_grab()
@@ -92,6 +92,10 @@ try:
     #
     #
     # sleep(1000000000000)
+
+
+    # bossTaVindo.test_diving()
+    # sleep(1000)
 
     while not (bossTaVindo.searching_closer_pipe()) : pass
 

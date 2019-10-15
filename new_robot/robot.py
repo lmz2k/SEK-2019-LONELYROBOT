@@ -1010,23 +1010,45 @@ class Robot():
 
         self.move_motors(-200, -200)
         sleep(1.5)
-        self.stop_wheel()
-        self.rotate_right_90()
 
-        self.move_motors()
-        sleep(2)
-        self.stop_wheel()
-        self.rotate_left_90()
+        if self.learning_dictionary[self.DEFAULT_PIPE] < 5000:
 
-        self.move_motors()
-        while self.right_color_sensor == "white" and self.left_color_sensor == "white": pass
-        self.stop_wheel()
-        self.color_alignment(["black"], self.PIPE_AREA, ["white"])
-        self.move_motors(-200, -200)
-        sleep(0.5)
-        self.stop_wheel()
-        self.rotate_left_90()
-        self.right_pid(distance= 800,claw_grab = True)
+            self.stop_wheel()
+            self.rotate_right_90()
+
+            self.move_motors()
+            sleep(2)
+            self.stop_wheel()
+            self.rotate_left_90()
+
+            self.move_motors()
+            while self.right_color_sensor == "white" and self.left_color_sensor == "white": pass
+            self.stop_wheel()
+            self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+            self.move_motors(-200, -200)
+            sleep(0.5)
+            self.stop_wheel()
+            self.rotate_left_90()
+            self.right_pid(distance= 800,claw_grab = True)
+
+        else:
+            self.stop_wheel()
+            self.rotate_left_90()
+
+            self.move_motors()
+            sleep(2)
+            self.stop_wheel()
+            self.rotate_right_90()
+
+            self.move_motors()
+            while self.right_color_sensor == "white" and self.left_color_sensor == "white": pass
+            self.stop_wheel()
+            self.color_alignment(["black"], self.PIPE_AREA, ["white"])
+            self.move_motors(-200, -200)
+            sleep(0.5)
+
+            self.rotate_right_90()
+            self.left_pid(distance= 800,claw_grab = True)
 
     def grab_the_pipe(self):
 
@@ -1049,6 +1071,7 @@ class Robot():
                 self.from_the_border_case()
 
         else:
+
             self.from_the_hole_case()
             self.move_motors(-50,-50)
             sleep(1)
@@ -1058,6 +1081,7 @@ class Robot():
 
             self.change_color_mode('COL-COLOR')
             print(self.middle_ultrasonic_sensors())
+
             if(left > 10 and right > 10):
                 self.move_motors(-200,-200)
                 while (self.left_color_sensor in self.PIPE_AREA or self.right_color_sensor in self.PIPE_AREA):pass
@@ -1068,8 +1092,11 @@ class Robot():
                 self.stop_wheel()
                 self.rotate_left_90()
 
+                #supondo que o cano foi pego
 
             else:
+
+
                 self.move_motors(100,100)
                 left, right = self.middle_ultrasonic_sensors()
                 while left > 5 and right > 5: left,right = self.middle_ultrasonic_sensors()
@@ -1079,7 +1106,6 @@ class Robot():
 
                 self.close_claws()
                 self.from_the_border_case()
-
 
     def prepare_to_dive(self):
         if(self.learning_dictionary[self.DEFAULT_PIPE] == 1600):
@@ -1095,6 +1121,27 @@ class Robot():
 
         self.move_motors(-200,-200)
         while int(self.right_color_sensor) == 0 or int(self.left_color_sensor) == 0:pass
-        sleep(0.75)
+        sleep(2)
         self.stop_wheel()
         self.rotate_right_90()
+
+    def test_diving(self):
+        self.move_motors(-800,-800)
+        sleep(1.3)
+        Sound.beep()
+        self.rotate_left_90()
+
+        Sound.beep()
+
+        self.move_motors(0, 1000)
+        sleep(5)
+
+        self.stop_wheel()
+
+        # self.move_motors(-200, -800)
+        # sleep(0.3)
+        # self.move_motors(500, 1000)
+        # sleep(0.5)
+        # self.move_motors(1000, 1000)
+        # sleep(2)
+        # self.stop_wheel()
