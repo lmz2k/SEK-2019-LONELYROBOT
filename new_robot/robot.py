@@ -2,6 +2,8 @@ import paho.mqtt.client as mqtt
 from ev3dev.ev3 import *
 from time import sleep
 from simple_pid import *
+import math
+from datetime import datetime, timedelta
 
 DEFAULT_SPEED = 500
 
@@ -9,6 +11,7 @@ class Robot():
 
     def __init__(self):
 
+        self.WALL_DISTANCE = 5
         self.INFINITY = 999999
         self.DEFAULT_PASSES = 1600
         self.DEFAULT_SPEED = 500
@@ -31,10 +34,10 @@ class Robot():
 
         self.left_ultrassonic = UltrasonicSensor('in4')
         self.right_ultrassonic = UltrasonicSensor('in3')
-        self.upper_front_ultrassonic = UltrasonicSensor('in2')
+        self.infrared = InfraredSensor('in2')
         self.gyro = GyroSensor('in1')
 
-        self.upper_front_ultrassonic.mode = 'US-DIST-CM'
+        self.infrared.mode = 'IR-PROX'
         self.left_ultrassonic.mode = 'US-DIST-CM'
         self.right_ultrassonic.mode = 'US-DIST-CM'
         self.gyro.mode = 'GYRO-ANG'
@@ -45,6 +48,7 @@ class Robot():
         self.right_color_sensor = "None"
 
         self.left_lower_ultrassonic = None
+        self.left_upper_ultrassonic = None
 
         self.secondary_brick_ip = "10.42.0.3"
         self.secondary_connection = mqtt.Client()
@@ -55,17 +59,17 @@ class Robot():
 
         ##Tertiary Brick
 
-        self.left_infrared = None
-        self.right_infrared = None
-
-        self.left_upper_ultrassonic = None
-
-        self.tertiary_brick_ip = "192.168.2.39"
-        self.tertiary_connection = mqtt.Client()
-        self.tertiary_connection.connect(self.tertiary_brick_ip, 1883, 60)
-        self.tertiary_connection.on_connect = self.on_connect_tertiary
-        self.tertiary_connection.on_message = self.on_message_tertiary
-        self.tertiary_connection.loop_start()
+        # self.left_infrared = None
+        # self.right_infrared = None
+        #
+        # self.left_upper_ultrassonic = None
+        #
+        # self.tertiary_brick_ip = "192.168.2.39"
+        # self.tertiary_connection = mqtt.Client()
+        # self.tertiary_connection.connect(self.tertiary_brick_ip, 1883, 60)
+        # self.tertiary_connection.on_connect = self.on_connect_tertiary
+        # self.tertiary_connection.on_message = self.on_message_tertiary
+        # self.tertiary_connection.loop_start()
 
         ##OTHERS
 
@@ -82,16 +86,17 @@ class Robot():
         self.left_color_sensor = mensagem[0]
         self.right_color_sensor = mensagem[1]
         self.left_lower_ultrassonic = float(mensagem[2])
+        self.left_upper_ultrassonic = float(mensagem[3])
 
-    def on_connect_tertiary(self, client, userdata, flags, rc):
-        print("TERTIARY BRICK CONNECTION SUCESS!!!!")
-        client.subscribe(self.DESTINY_FROM_TERTIATY)
-
-    def on_message_tertiary(self, client, userdata, msg):
-        mensagem = msg.payload.decode().split()
-        self.left_infrared = int(mensagem[0])
-        self.right_infrared = int(mensagem[1])
-        self.left_upper_ultrassonic = float(mensagem[2])
+    # def on_connect_tertiary(self, client, userdata, flags, rc):
+    #     print("TERTIARY BRICK CONNECTION SUCESS!!!!")
+    #     client.subscribe(self.DESTINY_FROM_TERTIATY)
+    #
+    # def on_message_tertiary(self, client, userdata, msg):
+    #     mensagem = msg.payload.decode().split()
+    #     self.left_infrared = int(mensagem[0])
+    #     self.right_infrared = int(mensagem[1])
+    #     self.left_upper_ultrassonic = float(mensagem[2])
 
     def gyro_reset(self):
         self.gyro.mode = 'GYRO-RATE'
@@ -119,10 +124,10 @@ class Robot():
                 pass
 
     def secondary_brick_values(self):
-        return self.left_color_sensor,self.right_color_sensor,self.left_lower_ultrassonic
+        return self.left_color_sensor,self.right_color_sensor,self.left_lower_ultrassonic,self.left_upper_ultrassonic
 
-    def tertiary_brick_values(self):
-        return self.left_infrared,self.right_infrared,self.left_upper_ultrassonic
+    # def tertiary_brick_values(self):
+    #     return self.left_infrared,self.right_infrared,self.left_upper_ultrassonic
 
     def angle_reset(self):
 
@@ -357,10 +362,6 @@ class Robot():
                 if (claw_grab):
                     self.claw_grab()
 
-            if(self.upper_front_ultrassonic.value() / 10 > 30):
-                default = 200
-                pid.tunings = (1.025, 0, 0.9)
-
             if (self.gyro.value() > 25):
                 self.stop_wheel()
                 self.change_color_mode("COL-COLOR")
@@ -410,10 +411,6 @@ class Robot():
                 if (claw_grab):
                     self.claw_grab()
 
-            if (self.upper_front_ultrassonic.value() / 10 > 30):
-                default = 200
-                pid.tunings = (1.025, 0, 0.9)
-
             if (self.gyro.value() < -25):
 
                 self.stop_wheel()
@@ -425,6 +422,7 @@ class Robot():
 
                 while self.left_color_sensor == "white":
                     self.move_motors(200,200)
+                sleep(0.5)
                 self.stop_wheel()
 
                 while self.left_color_sensor in self.PIPE_AREA or self.left_color_sensor == 'black':
@@ -432,6 +430,7 @@ class Robot():
 
                 self.stop_wheel()
                 self.change_color_mode("COL-REFLECT")
+                self.gyro_reset()
 
             if control > max_control:
                 control = max_speed_bound - default
@@ -554,10 +553,6 @@ class Robot():
                 self.gyro_reset()
                 default = 300
                 pid.tunings = (1.025, 0, 0.13,)
-
-            if (self.upper_front_ultrassonic.value() / 10 > 30):
-                default = 200
-                pid.tunings = (1.025, 0, 0.9)
 
             if (self.gyro.value() < -25):
 
@@ -847,7 +842,7 @@ class Robot():
         self.claw_position_reset()
         self.left_claw.run_forever(speed_sp=600)
         self.right_claw.run_forever(speed_sp=600)
-        sleep(2)
+        sleep(1.5)
 
     def getting_the_pipe(self):
         self.close_claws()
@@ -1034,7 +1029,6 @@ class Robot():
     def from_the_hole_case(self):
         self.angle_reset()
         self.adjust_claw()
-        self.close_claws()
 
         self.open_claws()
 
@@ -1111,7 +1105,7 @@ class Robot():
 
     def grab_the_pipe(self):
         self.move_motors(-50,-50)
-        sleep(1.25)
+        sleep(1)
         self.stop_wheel()
         self.close_claws()
 
@@ -1222,4 +1216,117 @@ class Robot():
         while 1:
             print(self.left_claw.position, self.right_claw.position)
 
+    def pipeline_support_following(self):
+        self.stop_wheel()
+        print("pipeline_support_following")
+        default_speed_for_pipeline = 150
+        max_control_for_pipeline = 300
+        pid = PID(10, 0, 2,
+                  setpoint=4)
+        self.change_color_mode('COL-REFLECT')
+
+        while True:
+            print(self.left_color_sensor, self.right_color_sensor)
+            side_distance = self.infrared.value()
+            control = pid(side_distance)
+            color_data = [self.left_color_sensor, self.right_color_sensor]
+
+            if int(color_data[0]) == 0 or int(color_data[1]) == 0:
+                self.stop_wheel()
+                print("finished pipeline_support_following")
+                # self.color_alignment(aligment_with_color=True)
+                self.move_motors(-300, -300)
+                sleep(0.5)
+                self.stop_wheel()
+                self.rotate_right_90()
+                return
+
+            if max(self.middle_ultrasonic_sensors()) <= self.WALL_DISTANCE:
+                self.stop_wheel()
+                self.move_motors(-200,-200)
+                sleep(0.5)
+                self.stop_wheel()
+                self.rotate_right_90()
+
+            if control > max_control_for_pipeline:
+                control = max_control_for_pipeline
+            elif control < -max_control_for_pipeline:
+                control = -max_control_for_pipeline
+
+            speed_a = default_speed_for_pipeline + control
+            speed_b = default_speed_for_pipeline - control
+
+            self.left_wheel.run_forever(speed_sp=speed_a)
+            self.right_wheel.run_forever(speed_sp=speed_b)
+
+    def phase_out_place_pipe(self, hole_size):
+        k_steps = 230
+        kp_for_pipeline = 6
+        ki_for_pipeline = 0
+        kd_for_pipeline = 2
+        set_point_for_pipeline = 8
+        default_speed_for_pipeline = 150
+        max_control_for_pipeline = 300
+        front_distance_to_rotate = 2
+
+        self.stop_wheel()
+        print("called phase_out_place_pipe")
+
+        pid = PID(kp_for_pipeline, ki_for_pipeline, kd_for_pipeline,
+                  setpoint=set_point_for_pipeline)
+
+        if hole_size == 10:
+            k_steps = 230
+
+        elif hole_size == 15:
+            k_steps = 360 - 120
+
+        elif hole_size == 20:
+            k_steps = 480 - 140
+
+        initial_step = self.left_wheel.position + self.right_wheel.position
+        while self.left_wheel.position + self.right_wheel.position <= initial_step + k_steps * 2:
+
+            # verifica colisão frontal
+            if min(self.middle_ultrasonic_sensors()) >= 7.5:
+                self.stop_wheel()
+                print("robot found wall")
+                break
+
+            # verifica queda
+            color_data = [self.left_color_sensor,self.right_color_sensor]
+            if color_data[0] == 0 or color_data[1] == 0:
+                self.stop_wheel()
+                break
+
+            control = pid(self.infrared.value())
+
+            if control > max_control_for_pipeline:
+                control = max_control_for_pipeline
+            elif control < -max_control_for_pipeline:
+                control = -max_control_for_pipeline
+
+            speed_a = default_speed_for_pipeline + control
+            speed_b = default_speed_for_pipeline - control
+
+            self.left_wheel.run_forever(speed_sp=speed_a)
+            self.right_wheel.run_forever(speed_sp=speed_b)
+
+        self.stop_wheel()
+        return
+
+    # def still_have_pipe(self) -> bool:
+    #     self.handler.left.stop_action = "hold"
+    #
+    #     for i in range(3):
+    #         self.move_handler(how_long=0.5, direction="down", speed=50)
+    #         self.move_handler(how_long=0.2, direction="up", speed=150)
+    #
+    #     self.move_handler(how_long=0.5, direction="down", speed=50)
+    #
+    #     if self.get_sensor_data("Ultrasonic")[1] < 15:
+    #
+    #         return True
+    #     else:
+    #         return False
 

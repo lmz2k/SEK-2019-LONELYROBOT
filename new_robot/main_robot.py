@@ -20,6 +20,7 @@ bossTaVindo.open_claws()
 bossTaVindo.claw_init()
 pipe_size = 10
 
+
 # while 1:
 #     print("levantando")
 #     bossTaVindo.claw_init()
@@ -31,48 +32,16 @@ pipe_size = 10
 #     bossTaVindo.claw_delivery()
 #     sleep(5)
 
-# bossTaVindo.move_motors(-1000,-1000)
-# x = input()
-# #bossTaVindo.rotate_right_90()
-# bossTaVindo.stop_wheel()
-
-
-# bossTaVindo.claw_grab()
-# bossTaVindo.adjust_claw()
-# sleep(15)
-# bossTaVindo.move_motors(100,100)
-
-# sleep(5)
-# bossTaVindo.stop_wheel()
-
-# bossTaVindo.rotate_left_90()
-# while 1: pass
-
 try:
-    # bossTaVindo.change_color_mode("COL-COLOR")
-    # while 1:
-    #     # print("SECONDARY")
-    #     # print(bossTaVindo.secondary_brick_values())
-    #     #
-    #     # print("\nTERTIARY")
-    #     # print(bossTaVindo.tertiary_brick_values())
-    #     print(bossTaVindo.gyro.value())
-    # ini = -3
-    # while not (bossTaVindo.search_border()):
-    #
-    #     if(bossTaVindo.upper_front_ultrassonic.value() / 10) > 35:
-    #         print("dist", bossTaVindo.upper_front_ultrassonic.value() / 10)
-    #         print()
-    #
-    #         bossTaVindo.move_motors(200, 200)
-    #         ini = time.time()
-    #
-    #     elif time.time() - ini >= 3:
-    #         bossTaVindo.move_motors(300,300)
-    #
-    # bossTaVindo.change_color_mode("COL-COLOR")
+    while 1:
+        bossTaVindo.left_pid(bossTaVindo.INFINITY)
 
-    # print("sai do primeiro whilte")
+    while 1:
+        bossTaVindo.move_motors(1000,1000)
+
+    while 1:
+        bossTaVindo.pipeline_support_following()
+    bossTaVindo.stop_wheel()
     # ini = -3
     # bossTaVindo.claw_init()
     # sleep(1)
@@ -83,31 +52,12 @@ try:
     #     if time.time() - time_init < 5:
     #         bossTaVindo.move_motors(100,100)
     #
-    #     if (bossTaVindo.upper_front_ultrassonic.value() / 10) > 35 and time.time() - time_init > 5:
-    #         print("dist", bossTaVindo.upper_front_ultrassonic.value() / 10)
-    #         print()
-    #
-    #         bossTaVindo.move_motors(200, 200)
-    #         ini = time.time()
-    #
-    #     elif time.time() - ini >= 3 and time.time() - time_init > 5:
+    #     else:
     #         bossTaVindo.move_motors(300, 300)
     #
     # bossTaVindo.learning_colors()
     # print(bossTaVindo.learning_dictionary)
 
-    # bossTaVindo.open_claws()
-    #
-    # bossTaVindo.claw_grab()
-    # sleep(3)
-    # bossTaVindo.close_claws()
-    #
-    #
-    # sleep(1000000000000)
-
-
-    # bossTaVindo.test_diving()
-    # sleep(1000)
     boole = False
     while not boole:
         while not (bossTaVindo.searching_closer_pipe()) : pass
@@ -117,7 +67,6 @@ try:
         boole = bossTaVindo.toward_the_pipe()
     bossTaVindo.stop_wheel()
     bossTaVindo.grab_the_pipe()
-    # bossTaVindo.grab_the_pipe()
     bossTaVindo.prepare_to_dive()
     # #
     # bossTaVindo.stop_wheel()

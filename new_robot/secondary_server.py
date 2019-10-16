@@ -60,7 +60,7 @@ def on_message( client, userdata, msg):
         elif motor_action == 'DELIVERY':
             boolean_claw_delivery = True
 
-action = ''
+action = 'COL-COLOR'
 
 ip_servidor = "localhost"
 client = mqtt.Client()
@@ -73,7 +73,10 @@ left_sensor = ColorSensor('in4')
 right_sensor = ColorSensor('in3')
 
 left_lower_ultrassonic = UltrasonicSensor('in2')
+left_upper_ultrassonic = UltrasonicSensor("in1")
+
 left_lower_ultrassonic.mode = ('US-DIST-CM')
+left_upper_ultrassonic.mode = ('US-DIST-CM')
 
 claw_motor = LargeMotor('outB')
 # claw_motor.stop_action = 'hold'
@@ -82,27 +85,16 @@ boolean_claw_init = False
 boolean_claw_grab = False
 boolean_claw_delivery = False
 
-# print("INICIEI")
-# claw_motor.stop()
-# claw_motor.run_timed(time_sp=5000, speed_sp=-1000, stop_action="hold")
-# claw_motor.stop()
-
-#
-#
-#
-# while 1:
-#     pass
 while True:
-    print(action)
     if action == 'COL-REFLECT':
         l,r = color_sensor_read('COL-REFLECT', left_sensor,right_sensor)
-        #print(l+" "+r)
-        client.publish("robot/secTomain",str(l)+" "+str(r)+" " + str(left_lower_ultrassonic.value() / 10))
+        print(str(l) + " " + str(r))
+        client.publish("robot/secTomain",str(l)+" "+str(r)+" " + str(left_lower_ultrassonic.value() / 10) + " " + str(left_upper_ultrassonic.value() / 10))
         sleep(0.05)
     elif action == 'COL-COLOR':
         l,r = color_sensor_read('COL-COLOR', left_sensor,right_sensor)
-        #print(str(l)+" "+str(r))
-        client.publish("robot/secTomain",str(l)+" "+str(r)+" " + str(left_lower_ultrassonic.value() / 10))
+        print(l + " " + r)
+        client.publish("robot/secTomain",str(l)+" "+str(r)+" " + str(left_lower_ultrassonic.value() / 10) + " " + str(left_upper_ultrassonic.value() / 10))
         sleep(0.05)
 
     if(boolean_claw_init):
