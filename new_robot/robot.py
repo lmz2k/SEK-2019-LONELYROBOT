@@ -11,6 +11,8 @@ class Robot():
 
     def __init__(self):
 
+        self.PIPE_FROM_THE_HOLE = 'PIPE_FROM_THE_HOLE'
+        self.PIPE_FROM_THE_BORDER = 'PIPE_FROM_THE_BORDER'
         self.WALL_DISTANCE = 5
         self.INFINITY = 999999
         self.DEFAULT_PASSES = 1600
@@ -72,7 +74,7 @@ class Robot():
         # self.tertiary_connection.loop_start()
 
         ##OTHERS
-
+        self.pipe_dimesion = self.DEFAULT_PIPE
         # self.learning_dictionary = {}
         self.learning_dictionary = {15: 1600 * 2.2, 10: 1600, 20: 1600 * 3.34}
         self.init_wheel_position = 0
@@ -243,6 +245,8 @@ class Robot():
 
     def search_border(self, border = True): ##se border == True ele vai ir para o borda esquerda, caso não, borda direita
 
+        self.change_color_mode('COL-COLOR')
+
         if(self.left_color_sensor == "green" or self.right_color_sensor == "green"):
             print("Green case")
             self.color_alignment(["green"], [], ["white"])
@@ -279,6 +283,10 @@ class Robot():
                     self.move_motors(-100, -100)
                     while self.left_color_sensor != 'white' and self.right_color_sensor != 'white': pass
                     self.stop_wheel()
+
+                self.move_motors(-200, -200)
+                sleep(2)
+                self.stop_wheel()
                 return True
 
             else:
@@ -339,7 +347,7 @@ class Robot():
         self.gyro_reset()
         self.gyro_reset()
 
-    def right_pid(self,distance, claw_grab = False):
+    def right_pid_to_grab(self):
         self.gyro_reset()
         self.change_color_mode('COL-REFLECT')
         self.right_wheel.position = 0
@@ -350,17 +358,12 @@ class Robot():
         max_control = max_speed_bound - default
         min_control = -max_speed_bound + default
         entrar = True
-        while self.right_wheel.position < distance and (int(self.left_color_sensor) != 0 and int(self.right_color_sensor) != 0):
+        while (int(self.left_color_sensor) != 0 and int(self.right_color_sensor) != 0):
 
             control = pid(int(self.right_color_sensor))
 
-            if self.right_wheel.position > 200 and entrar:
-                entrar = False
-                self.gyro_reset()
-                default = 300
-                pid.tunings = (1.025, 0, 0.9)
-                if (claw_grab):
-                    self.claw_grab()
+            if self.right_wheel.position > 100:
+                self.claw_init()
 
             if (self.gyro.value() > 25):
                 self.stop_wheel()
@@ -387,6 +390,114 @@ class Robot():
 
         self.stop_wheel()
 
+    def right_pid(self,distance, claw_grab = False):
+        self.gyro_reset()
+        self.change_color_mode('COL-REFLECT')
+        self.right_wheel.position = 0
+        default = 200
+        pid = PID(1.025, 0, 0.9, setpoint=39)
+
+        max_speed_bound = 500
+        max_control = max_speed_bound - default
+        min_control = -max_speed_bound + default
+        entrar = True
+        while self.right_wheel.position < distance and (int(self.left_color_sensor) != 0 and int(self.right_color_sensor) != 0):
+
+            control = pid(int(self.right_color_sensor))
+
+            if (claw_grab and (max(self.middle_ultrasonic_sensors())) < 5):
+                self.stop_wheel()
+                self.right_pid_to_grab()
+                break
+
+            if self.right_wheel.position > 200 and entrar:
+                entrar = False
+                self.gyro_reset()
+                default = 300
+                pid.tunings = (1.025, 0, 0.9)
+
+            if (self.gyro.value() > 25):
+                self.stop_wheel()
+                self.change_color_mode("COL-COLOR")
+
+                while self.right_color_sensor in self.PIPE_AREA:
+                    self.move_motors(-200, -200)
+                self.stop_wheel()
+
+                while self.right_color_sensor in self.PIPE_AREA or self.right_color_sensor == 'black':
+                    self.right_wheel.run_forever(speed_sp=200)
+
+                self.stop_wheel()
+                self.change_color_mode("COL-REFLECT")
+                self.gyro_reset()
+
+            if control > max_control:
+                control = max_speed_bound - default
+            elif control < min_control:
+                control = -max_speed_bound + default
+
+            self.right_wheel.run_forever(speed_sp=default + control)
+            self.left_wheel.run_forever(speed_sp=default - control)
+
+        self.stop_wheel()
+
+    def left_pid_to_grab(self):
+        self.move_motors(-200,-200)
+        sleep(1)
+        self.stop_wheel()
+        self.claw_grab()
+
+        self.gyro_reset()
+        self.change_color_mode('COL-REFLECT')
+        self.left_wheel.position = 0
+
+        default = 200
+        pid = PID(1.025, 0, 0.13, setpoint=39)
+
+        max_speed_bound = 500
+        max_control = max_speed_bound - default
+        min_control = -max_speed_bound + default
+
+        while (int(self.left_color_sensor) != 0 and int(self.right_color_sensor) != 0):
+            print("gyro Left   " + str(self.gyro.value()))
+
+            control = pid(int(self.left_color_sensor))
+
+            if (self.left_wheel.position > 500):
+                self.claw_init()
+                break
+
+            if (self.gyro.value() < -25):
+
+                self.stop_wheel()
+                self.change_color_mode("COL-COLOR")
+
+                while self.left_color_sensor in self.PIPE_AREA:
+                    self.move_motors(-200, -200)
+                self.stop_wheel()
+
+                while self.left_color_sensor == "white":
+                    self.move_motors(200, 200)
+                sleep(0.5)
+                self.stop_wheel()
+
+                while self.left_color_sensor in self.PIPE_AREA or self.left_color_sensor == 'black':
+                    self.left_wheel.run_forever(speed_sp=200)
+
+                self.stop_wheel()
+                self.change_color_mode("COL-REFLECT")
+                self.gyro_reset()
+
+            if control > max_control:
+                control = max_speed_bound - default
+            elif control < min_control:
+                control = -max_speed_bound + default
+
+            self.right_wheel.run_forever(speed_sp=default - control)
+            self.left_wheel.run_forever(speed_sp=default + control)
+
+        self.stop_wheel()
+
     def left_pid(self, distance, claw_grab = False):
 
         self.gyro_reset()
@@ -404,13 +515,16 @@ class Robot():
             print("gyro Left   " + str(self.gyro.value()))
 
             control = pid(int(self.left_color_sensor))
+            if(claw_grab and (max(self.middle_ultrasonic_sensors())) <= 10):
+                self.stop_wheel()
+                self.left_pid_to_grab()
+                break
+
             if self.left_wheel.position > 200 and entrar:
                 entrar = False
                 self.gyro_reset()
                 default = 300
                 pid.tunings = (1.025, 0, 0.13)
-                if (claw_grab):
-                    self.claw_grab()
 
             if (self.gyro.value() < -25):
 
@@ -464,10 +578,6 @@ class Robot():
             self.stop_wheel()
 
     def learning_colors(self):
-        self.move_motors(-200,-200)
-        sleep(2)
-        self.stop_wheel()
-
         self.rotate_left_90()
         self.color_alignment(["black"], self.PIPE_AREA, ["white"])
 
@@ -948,8 +1058,8 @@ class Robot():
 
         self.re_pipe(self.DEFAULT_PIPE)
 
-        self.move_motors(-200, -200)
-        sleep(1.5)
+        self.move_motors(-300, -300)
+        sleep(1)
 
         if self.learning_dictionary[self.DEFAULT_PIPE] < 5000:
 
@@ -970,6 +1080,8 @@ class Robot():
             self.stop_wheel()
             self.rotate_left_90()
             self.right_pid(distance= 800,claw_grab = True)
+            self.rotate_left_90()
+
 
         else:
             self.stop_wheel()
@@ -986,9 +1098,10 @@ class Robot():
             self.color_alignment(["black"], self.PIPE_AREA, ["white"])
             self.move_motors(-100, -100)
             sleep(0.5)
-
+            self.stop_wheel()
             self.rotate_right_90()
-            self.left_pid(distance= 800,claw_grab = True)
+            self.left_pid(distance=800, claw_grab=True)
+            self.rotate_right_90()
 
     def grab_the_pipe(self):
         self.move_motors(-75,-75)
@@ -1010,7 +1123,6 @@ class Robot():
                 self.from_the_border_case()
 
         else:
-
             self.from_the_hole_case()
             self.move_motors(-50,-50)
             sleep(1)
@@ -1026,11 +1138,10 @@ class Robot():
                 while (self.left_color_sensor in self.PIPE_AREA or self.right_color_sensor in self.PIPE_AREA):pass
                 self.stop_wheel()
                 self.color_alignment(["black"], ["white"],self.PIPE_AREA)
-                self.move_motors(200,200)
-                sleep(0.7)
+                self.move_motors()
+                sleep(1.5)
                 self.stop_wheel()
-                self.rotate_left_90()
-
+                self.rotate(180,300)
                 #supondo que o cano foi pego
 
             else:
@@ -1045,43 +1156,13 @@ class Robot():
                 self.from_the_border_case()
 
     def prepare_to_dive(self):
-        if(self.learning_dictionary[self.DEFAULT_PIPE] == 1600):
-
-            self.rotate_right_90()
-            self.color_alignment(["black"], self.PIPE_AREA, ["white"])
-            self.move_motors(-100,-100)
-            sleep(0.5)
-            self.stop_wheel()
-            self.rotate_right_90()
-
-        self.left_pid(self.INFINITY)
-
+        self.change_color_mode('COL-REFLECT')
         self.move_motors(-200,-200)
         while int(self.right_color_sensor) == 0 or int(self.left_color_sensor) == 0:pass
         sleep(2)
         self.stop_wheel()
-        self.rotate(-95,300)
+        self.rotate(-70,300)
 
-    def test_diving(self):
-        self.move_motors(-800,-800)
-        sleep(1.3)
-        Sound.beep()
-        self.rotate_left_90()
-
-        Sound.beep()
-
-        self.move_motors(0, 1000)
-        sleep(5)
-
-        self.stop_wheel()
-
-        # self.move_motors(-200, -800)
-        # sleep(0.3)
-        # self.move_motors(500, 1000)
-        # sleep(0.5)
-        # self.move_motors(1000, 1000)
-        # sleep(2)
-        # self.stop_wheel()
     def test_adjust_claw(self):
         self.open_claws()
         sleep(1)
@@ -1118,10 +1199,10 @@ class Robot():
                 self.stop_wheel()
                 print("finished pipeline_support_following")
                 # self.color_alignment(aligment_with_color=True)
-                self.move_motors(-300, -300)
+                self.move_motors(-500, -500)
                 sleep(0.5)
                 self.stop_wheel()
-                self.rotate_right_90()
+                self.rotate(-85,300)
                 return
 
             if max(self.middle_ultrasonic_sensors()) <= self.WALL_DISTANCE:
@@ -1195,20 +1276,12 @@ class Robot():
         self.stop_wheel()
         return
 
-    # def still_have_pipe(self) -> bool:
-    #     self.handler.left.stop_action = "hold"
-    #
-    #     for i in range(3):
-    #         self.move_handler(how_long=0.5, direction="down", speed=50)
-    #         self.move_handler(how_long=0.2, direction="up", speed=150)
-    #
-    #     self.move_handler(how_long=0.5, direction="down", speed=50)
-    #
-    #     if self.get_sensor_data("Ultrasonic")[1] < 15:
-    #
-    #         return True
-    #     else:
-    #         return False
+    def go_up_to_meeting_area(self):
+        self.change_color_mode('COL-COLOR')
+        self.move_motors(-1000,-1000)
+        while self.left_color_sensor != 'white' or self.right_color_sensor != 'white' : pass
+        self.stop_wheel()
+        self.rotate(180,self.DEFAULT_SPEED)
 
     def go_down_to_pipeline(self):
         self.change_color_mode('COL-COLOR')
