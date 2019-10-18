@@ -23,20 +23,24 @@ def color_sensor_read(mode,left_sensor,right_sensor):
     return left_sensor.value(),right_sensor.value()
 
 def claw_init():
+    claw_motor.stop_action = 'brake'
     claw_motor.run_forever(speed_sp=-1000)
-    sleep(5)
+    sleep(2)
+    claw_motor.stop_action = 'hold'
+    claw_motor.stop()
 
 def claw_grab():
+    claw_motor.stop_action = 'brake'
     claw_motor.run_forever(speed_sp=1000)
-    sleep(1.5)
+    sleep(0.5)
     claw_motor.stop()
-    sleep(1)
-    claw_motor.run_forever(speed_sp=-1000)
-    sleep(5)
 
 def claw_delivery():
+    claw_motor.stop_action = 'brake'
     claw_motor.run_forever(speed_sp=1000)
-
+    sleep(1)
+    claw_motor.stop_action = 'hold'
+    claw_motor.stop()
 def on_connect(client, userdata, flags, rc):
     client.subscribe("robot/mainTosec")
 
@@ -78,8 +82,8 @@ left_upper_ultrassonic = UltrasonicSensor("in1")
 left_lower_ultrassonic.mode = ('US-DIST-CM')
 left_upper_ultrassonic.mode = ('US-DIST-CM')
 
-claw_motor = LargeMotor('outB')
-# claw_motor.stop_action = 'hold'
+claw_motor = LargeMotor('outD')
+claw_motor.stop_action = 'hold'
 
 boolean_claw_init = False
 boolean_claw_grab = False
@@ -98,16 +102,16 @@ while True:
         sleep(0.05)
 
     if(boolean_claw_init):
-        Sound.beep()
         claw_init()
         boolean_claw_init = False
+        Sound.beep()
 
     elif(boolean_claw_grab):
-        Sound.beep()
         claw_grab()
         boolean_claw_grab = False
+        Sound.beep()
 
     elif(boolean_claw_delivery):
-        Sound.beep()
         claw_delivery()
         boolean_claw_delivery = False
+        Sound.beep()
