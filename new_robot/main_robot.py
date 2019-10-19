@@ -21,12 +21,42 @@ bossTaVindo.change_color_mode('COL-COLOR')
 pipe_size = 10
 sleep(1)
 start_of_round = False
-
+bossTaVindo.claw_position_reset()
 try:
+    # while 1:
+    #     bossTaVindo.grab_the_pipe_with_front_claw()
+    #     sleep(3)
 
-    bossTaVindo.left_pid(distance=800, claw_grab=True)
-    bossTaVindo.stop_wheel()
-    sleep(30)
+    #
+    # while 1:
+    #     bossTaVindo.close_claws()
+    #     sleep(2)
+    #     bossTaVindo.adjust_claw()
+    #     bossTaVindo.open_claws()
+    #     sleep(2)
+
+    #
+    # while 1:
+    #     bossTaVindo.toward_the_pipe()
+    #     bossTaVindo.grab_the_pipe()
+    #     bossTaVindo.stop_wheel()
+    #     sleep(2)
+    #
+    # while 1:
+    #     bossTaVindo.close_claws()
+    #     print(bossTaVindo.the_pipe_is())
+    #     sleep(2)
+    #     bossTaVindo.open_claws()
+    #
+
+    # while 1:
+        #bossTaVindo.blue_area_PID()
+        # bossTaVindo.pipeline_support_following()
+
+    # boole = bossTaVindo.toward_the_pipe()
+    # bossTaVindo.stop_wheel()
+    # bossTaVindo.grab_the_pipe()
+    # sleep(30)
 
     ########## Início
     while True:
@@ -37,9 +67,9 @@ try:
 
         while not (bossTaVindo.search_border(start_of_round)):
             if time.time() - time_init < 5:
-                bossTaVindo.move_motors(100,100)
+                bossTaVindo.move_motors_run_forever(100, 100)
             else:
-                bossTaVindo.move_motors(300, 300)
+                bossTaVindo.move_motors_run_forever(300, 300)
 
         if not (start_of_round):
             bossTaVindo.learning_colors()
@@ -48,26 +78,27 @@ try:
 
         else:
             bossTaVindo.rotate_right_90()
-            bossTaVindo.move_motors(200,200)
+            bossTaVindo.move_motors_run_forever(200, 200)
             while bossTaVindo.left_color_sensor == 'white' and bossTaVindo.right_color_sensor == 'white': pass
             bossTaVindo.stop_wheel()
             bossTaVindo.color_alignment(['black'], bossTaVindo.PIPE_AREA, ['white'])
-            bossTaVindo.move_motors(-100,-100)
+            bossTaVindo.move_motors_run_forever(-100, -100)
             sleep(0.5)
             bossTaVindo.stop_wheel()
             bossTaVindo.rotate_right_90()
 
-        boole = False
-        while not boole:
+        condition = bossTaVindo.LOST_PIPE
+        while condition == bossTaVindo.LOST_PIPE:
             while not (bossTaVindo.searching_closer_pipe()) : pass
-            bossTaVindo.move_motors(200,200)
+            bossTaVindo.move_motors_run_forever(200, 200)
             sleep(1.5)
             bossTaVindo.stop_wheel()
-            boole = bossTaVindo.toward_the_pipe()
-        bossTaVindo.stop_wheel()
-        bossTaVindo.grab_the_pipe()
+            if not (bossTaVindo.toward_the_pipe()):
+                bossTaVindo.stop_wheel()
+                continue
+            condition = bossTaVindo.grab_the_pipe()
         while not (bossTaVindo.search_border(False)):
-            bossTaVindo.move_motors(300, 300)
+            bossTaVindo.move_motors_run_forever(300, 300)
         bossTaVindo.prepare_to_dive()
         bossTaVindo.go_down_to_pipeline()
         bossTaVindo.pipeline_support_following()
