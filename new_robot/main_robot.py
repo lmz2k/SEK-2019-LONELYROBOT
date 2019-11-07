@@ -8,68 +8,25 @@ from simple_pid import *
 from robot import Robot
 
 bossTaVindo = Robot()
-#
-# while 1:
-#     bossTaVindo.open_claws()
-
-# bossTaVindo.claw_grab()
-# bossTaVindo.claw_delivery()
-
-bossTaVindo.open_claws()
-bossTaVindo.claw_init()
-bossTaVindo.change_color_mode('COL-COLOR')
 pipe_size = 10
-sleep(1)
 start_of_round = False
-bossTaVindo.claw_position_reset()
+
+
+
+while not bossTaVindo.initial_posotion_start:
+    bossTaVindo.btn.process()
+    print('PRESS ME')
+
 try:
-    # while 1:
-    #     bossTaVindo.grab_the_pipe_with_front_claw()
-    #     sleep(3)
-
-    #
-    # while 1:
-    #     bossTaVindo.close_claws()
-    #     sleep(2)
-    #     bossTaVindo.adjust_claw()
-    #     bossTaVindo.open_claws()
-    #     sleep(2)
-
-    #
-    # while 1:
-    #     bossTaVindo.toward_the_pipe()
-    #     bossTaVindo.grab_the_pipe()
-    #     bossTaVindo.stop_wheel()
-    #     sleep(2)
-    #
-    # while 1:
-    #     bossTaVindo.close_claws()
-    #     print(bossTaVindo.the_pipe_is())
-    #     sleep(2)
-    #     bossTaVindo.open_claws()
-    #
-
-    # while 1:
-        #bossTaVindo.blue_area_PID()
-        # bossTaVindo.pipeline_support_following()
-
-    # boole = bossTaVindo.toward_the_pipe()
-    # bossTaVindo.stop_wheel()
-    # bossTaVindo.grab_the_pipe()
-    # sleep(30)
-
-    ########## Início
+    ########## Início ###########################
     while True:
-        ini = -3
+        bossTaVindo.open_claws()
         bossTaVindo.claw_init()
-        sleep(1)
-        time_init = time.time()
+        bossTaVindo.change_color_mode('COL-COLOR')
+        sleep(2)
 
         while not (bossTaVindo.search_border(start_of_round)):
-            if time.time() - time_init < 5:
-                bossTaVindo.move_motors_run_forever(100, 100)
-            else:
-                bossTaVindo.move_motors_run_forever(300, 300)
+            bossTaVindo.move_motors_run_forever(300, 300)
 
         if not (start_of_round):
             bossTaVindo.learning_colors()
@@ -101,8 +58,9 @@ try:
             bossTaVindo.move_motors_run_forever(300, 300)
         bossTaVindo.prepare_to_dive()
         bossTaVindo.go_down_to_pipeline()
-        bossTaVindo.pipeline_support_following()
+        bossTaVindo.deep_area_pipe_following()
         bossTaVindo.go_up_to_meeting_area()
+        bossTaVindo.DEFAULT_PIPE = 10
 
 except KeyboardInterrupt:
     bossTaVindo.stop_wheel()

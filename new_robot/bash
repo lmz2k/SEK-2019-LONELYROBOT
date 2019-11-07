@@ -1,0 +1,25 @@
+#!/bin/bash
+
+motor=/sys/class/tacho-motor/motor3
+
+echo 5000 > $motor/time_sp
+echo 900 > $motor/speed_sp
+echo run-timed > $motor/command
+
+sleep 7
+
+echo 5000 > $motor/time_sp
+echo 900 > $motor/speed_sp
+echo run-timed > $motor/command
+
+sleep 7
+
+echo 5000 > $motor/time_sp
+echo 1000 > $motor/speed_sp
+echo run-timed > $motor/command
+
+sleep 7
+
+echo 5000 > $motor/time_sp
+echo 1000 > $motor/speed_sp
+echo run-timed > $motor/command
